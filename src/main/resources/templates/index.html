@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>User Management</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background-color: #111;
+      color: #f0f0f0;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #00bcd4;
+      margin-bottom: 10px;
+    }
+
+    .content {
+      display: flex;
+      flex: 1;
+      gap: 20px;
+      overflow: hidden;
+    }
+
+    .section {
+      flex: 1;
+      background: #1a1a1a;
+      border-radius: 8px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .section h2 {
+      color: #00bcd4;
+      margin-bottom: 10px;
+    }
+
+    input, button {
+      margin: 8px 0;
+      padding: 10px;
+      font-size: 15px;
+      border: none;
+      border-radius: 4px;
+      width: 100%;
+    }
+
+    input {
+      background-color: #2c2c2c;
+      color: #fff;
+      border: 1px solid #444;
+    }
+
+    button {
+      background-color: #00bcd4;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0198a6;
+    }
+
+    .output {
+      background: #2a2a2a;
+      padding: 10px;
+      border-radius: 6px;
+      color: #ccc;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      flex: 1;
+      margin-top: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
+
+    th {
+      background-color: #00bcd4;
+      color: black;
+    }
+
+    tr:hover {
+      background-color: #292929;
+    }
+
+    @media screen and (max-width: 900px) {
+      .content {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>User Management System</h1>
+
+    <div class="content">
+      <!-- Section 1: Actions -->
+      <div class="section">
+        <h2>Actions</h2>
+        <input id="name" type="text" placeholder="Name" />
+        <input id="email" type="email" placeholder="Email" />
+        <input id="mobile" type="text" placeholder="Mobile" />
+        <button onclick="addUser()">Add User</button>
+
+        <input id="getId" type="number" placeholder="Get User by ID" />
+        <button onclick="getUserById()">Fetch User</button>
+
+        <input id="deleteId" type="number" placeholder="Delete User by ID" />
+        <button onclick="deleteUser()">Delete User</button>
+      </div>
+
+      <!-- Section 2: User List in Table -->
+      <div class="section">
+        <h2>All Users</h2>
+        <button onclick="getAllUsers()">Load Users</button>
+        <div class="output" id="userList">
+          <p>Click the button to load users...</p>
+        </div>
+      </div>
+
+      <!-- Section 3: Console -->
+      <div class="section">
+        <h2>Console</h2>
+        <div class="output" id="console">Action results and messages will appear here...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = "/users";
+
+    async function addUser() {
+      const user = {
+        name: document.getElementById("name").value,
+        email: document.getElementById("email").value,
+        mobile: document.getElementById("mobile").value
+      };
+
+      const res = await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(user)
+      });
+
+      const data = await res.json();
+      document.getElementById("console").innerText = "User added:\n" + JSON.stringify(data, null, 2);
+    }
+
+    async function getAllUsers() {
+      const res = await fetch(API);
+      const users = await res.json();
+
+      if (users.length === 0) {
+        document.getElementById("userList").innerHTML = "<p>No users found.</p>";
+        return;
+      }
+
+      let table = `<table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Name</th><th>Email</th><th>Mobile</th>
+          </tr>
+        </thead><tbody>`;
+
+      users.forEach(u => {
+        table += `<tr>
+          <td>${u.id}</td>
+          <td>${u.name}</td>
+          <td>${u.email}</td>
+          <td>${u.mobile}</td>
+        </tr>`;
+      });
+
+      table += "</tbody></table>";
+
+      document.getElementById("userList").innerHTML = table;
+    }
+
+    async function getUserById() {
+      const id = document.getElementById("getId").value;
+      const res = await fetch(`${API}/${id}`);
+      const output = document.getElementById("console");
+
+      if (res.ok) {
+        const user = await res.json();
+        output.innerText = `Fetched User:\nID: ${user.id}\nName: ${user.name}\nEmail: ${user.email}\nMobile: ${user.mobile}`;
+      } else {
+        output.innerText = "User not found.";
+      }
+    }
+
+    async function deleteUser() {
+      const id = document.getElementById("deleteId").value;
+      const res = await fetch(`${API}/${id}`, { method: "DELETE" });
+      const msg = await res.text();
+      document.getElementById("console").innerText = msg;
+    }
+  </script>
+</body>
+</html>
